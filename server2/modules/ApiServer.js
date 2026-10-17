@@ -2,6 +2,7 @@ const http = require("node:http");
 const MESSAGES = require("./lang/en");
 
 const INSERT_PATH = "/lab5/api/v1/patients";
+const QUERY_PATH = "/lab5/api/v1/sql";
 
 class ApiServer {
     constructor(repository, port) {
@@ -40,6 +41,14 @@ class ApiServer {
 
         const url = new URL(request.url, "http://localhost");
 
+        if (
+            url.pathname === QUERY_PATH ||
+            url.pathname.startsWith(`${QUERY_PATH}/`)
+        ) {
+            await this.handleQuery(request, response, url);
+            return;
+        }
+
         if (url.pathname !== INSERT_PATH) {
             this.sendJson(response, 404, {
                 message: MESSAGES.notFound
@@ -74,6 +83,84 @@ class ApiServer {
 
             this.sendJson(response, 500, {
                 message: MESSAGES.insertFailed
+            });
+        }
+    }
+
+    // Accepts both forms:
+    //   /lab5/api/v1/sql/"select * from patient"  (URL encoded)
+    //   /lab5/api/v1/sql?query=select * from patient
+    getSql(url) {
+        const fromParameter = url.searchParams.get("query");
+
+        if (fromParameter) {
+            return fromParameter;
+        }
+
+        let sql = decodeURIComponent(
+            url.pathname.slice(QUERY_PATH.length + 1)
+        );
+
+        if (sql.length > 1 && sql.startsWith("\"") && sql.endsWith("\"")) {
+            sql = sql.slice(1, -1);
+        }
+
+        return sql;
+    }
+
+    async handleQuery(request, response, url) {
+        if (request.method === "OPTIONS") {
+            response.writeHead(204);
+            response.end();
+            return;
+        }
+
+        if (request.method !== "GET") {
+            response.setHeader("Allow", "GET, OPTIONS");
+
+            this.sendJson(response, 405, {
+                message: MESSAGES.methodNotAllowed
+            });
+            return;
+        }
+
+        let sql;
+
+        try {
+            sql = this.getSql(url);
+        } catch (error) {
+            this.sendJson(response, 400, {
+                message: MESSAGES.badQueryEncoding
+            });
+            return;
+        }
+
+        if (sql.trim() === "") {
+            this.sendJson(response, 400, {
+                message: MESSAGES.missingQuery
+            });
+            return;
+        }
+
+        try {
+            const rows = await this.repository.selectRows(sql);
+
+            this.sendJson(response, 200, rows);
+        } catch (error) {
+            console.error(MESSAGES.queryFailed, error.code);
+
+            // sqlMessage is only set when the database rejected the SQL
+            // (syntax error, missing table, permission denied).
+            if (error.sqlMessage) {
+                this.sendJson(response, 400, {
+                    message: MESSAGES.queryFailed,
+                    error: error.sqlMessage
+                });
+                return;
+            }
+
+            this.sendJson(response, 500, {
+                message: MESSAGES.serverError
             });
         }
     }

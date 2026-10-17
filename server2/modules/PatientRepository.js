@@ -40,6 +40,14 @@ class PatientRepository {
 
         return result.affectedRows;
     }
+
+    // Uses the reader pool only, so the database itself
+    // rejects anything that is not a SELECT.
+    async selectRows(sql) {
+        const [rows] = await this.database.readerPool.query(sql);
+
+        return rows;
+    }
 }
 
 module.exports = PatientRepository;
