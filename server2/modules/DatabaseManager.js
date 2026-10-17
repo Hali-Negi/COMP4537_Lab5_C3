@@ -1,6 +1,8 @@
 
 
 const mysql = require("mysql2/promise");
+const fs = require("node:fs");
+const path = require("node:path");
 
 class DatabaseManager {
     constructor() {
@@ -9,7 +11,14 @@ class DatabaseManager {
             port: Number(process.env.DB_PORT),
             database: process.env.DB_NAME,
             dateStrings: true,
-            multipleStatements: false
+            multipleStatements: false,
+            ssl: {
+                ca: fs.readFileSync(
+                    path.join(__dirname, "../certs/ca.pem"),
+                    "utf8"
+                ),
+                rejectUnauthorized: true
+            }
         };
 
         this.readerPool = mysql.createPool({
