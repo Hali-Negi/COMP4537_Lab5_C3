@@ -20,7 +20,7 @@ A two-server patient database application.
 
 - `DatabaseManager`: Creates separate reader and writer connection pools.
 - `PatientRepository`: Creates the patient table if missing and inserts four patients.
-- `ApiServer`: Handles HTTP requests, CORS, and the POST endpoint.
+- `ApiServer`: Handles HTTP requests, CORS, POST insertion, and GET SQL queries.
 - `modules/lang/en.js`: Stores server messages.
 - `server.js`: Creates the objects and starts the API.
 - `checkDatabase.js`: Checks both database account connections.
@@ -177,8 +177,8 @@ Expected response:
 }
 ```
 
-The API currently runs locally for testing while connecting
-to the remote database.
+The API supports local testing and is deployed on Render, connecting
+to the remote Aiven database using SSL.
 
 ## Verification completed
 
@@ -204,13 +204,30 @@ to the remote database.
 - Empty queries displayed "No SQL query was provided."
 - Queries against a missing table displayed the database error.
 
-## Remaining work
+## Hosted application
 
-- Test table recreation in a controlled test.
-- Deploy the client and API to different HTTPS origins.
-- Replace the client's localhost API URL with the deployed API URL.
-- Test the deployed application end to end.
+- Client: https://comp4537-lab5-c3-client.onrender.com
+- API: https://comp4537-lab5-c3-api.onrender.com
+- Sample GET: https://comp4537-lab5-c3-api.onrender.com/lab5/api/v1/sql/SELECT%20%2A%20FROM%20patient
 
+Both services are deployed from the main branch on Render.
+The client uses the hosted HTTPS API URL.
 
+## GET endpoint
 
+GET /lab5/api/v1/sql/<URL-encoded SQL>
 
+Queries execute through the SELECT-only reader account.
+Successful queries return HTTP 200 with a JSON result.
+SQL errors, including denied database commands, return HTTP 400.
+
+## Hosted verification completed
+
+- Client successfully queried the API on a different HTTPS origin.
+- Insert increased the patient count from 20 to 24.
+- MySQL denied DELETE through the hosted client using lab5_reader.
+- Table recreation passed: the original patient table was temporarily
+  renamed, and Insert recreated patient with the four correct records.
+- The original patient table was restored and verified to contain 24 records.
+- The four recreation-test records were preserved separately in
+  patient_recreation_test.
