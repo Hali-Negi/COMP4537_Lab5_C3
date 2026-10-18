@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:3000/lab5/api/v1";
+const API_BASE_URL = "https://comp4537-lab5-c3-api.onrender.com/lab5/api/v1";
 
 // Talks to server2.
 class ApiClient {
