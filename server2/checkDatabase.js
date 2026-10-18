@@ -1,5 +1,3 @@
-
-
 const DatabaseManager = require("./modules/DatabaseManager");
 
 const MESSAGES = {

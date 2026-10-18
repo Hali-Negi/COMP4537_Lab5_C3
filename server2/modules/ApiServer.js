@@ -87,16 +87,7 @@ class ApiServer {
         }
     }
 
-    // Accepts both forms:
-    //   /lab5/api/v1/sql/"select * from patient"  (URL encoded)
-    //   /lab5/api/v1/sql?query=select * from patient
     getSql(url) {
-        const fromParameter = url.searchParams.get("query");
-
-        if (fromParameter) {
-            return fromParameter;
-        }
-
         let sql = decodeURIComponent(
             url.pathname.slice(QUERY_PATH.length + 1)
         );
@@ -149,8 +140,6 @@ class ApiServer {
         } catch (error) {
             console.error(MESSAGES.queryFailed, error.code);
 
-            // sqlMessage is only set when the database rejected the SQL
-            // (syntax error, missing table, permission denied).
             if (error.sqlMessage) {
                 this.sendJson(response, 400, {
                     message: MESSAGES.queryFailed,

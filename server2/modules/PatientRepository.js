@@ -1,7 +1,5 @@
-// ChatGPT was used to assist with this code.
-// https://chatgpt.com/
-
-class PatientRepository {
+    class PatientRepository {
+        
     constructor(database) {
         this.database = database;
     }
@@ -41,8 +39,6 @@ class PatientRepository {
         return result.affectedRows;
     }
 
-    // Uses the reader pool only, so the database itself
-    // rejects anything that is not a SELECT.
     async selectRows(sql) {
         const [rows] = await this.database.readerPool.query(sql);
 
